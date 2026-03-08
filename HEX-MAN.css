@@ -1,0 +1,32 @@
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #ffff00;
+            --neon-green: #00ff88;
+            --neon-orange: #ff6600;
+            --dark-bg: #000811;
+            --grid-color: #001a2e;
+            --wall-color: #0066cc;
+            --wall-glow: #004499;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: var(--dark-bg);
+            display: flex;
+            flex-direction: column;
+        }

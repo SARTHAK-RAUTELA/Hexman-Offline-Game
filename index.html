@@ -5,46 +5,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HEX-MAN</title>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
-
-        :root {
-            --neon-cyan: #00ffff;
-            --neon-magenta: #ff00ff;
-            --neon-yellow: #ffff00;
-            --neon-green: #00ff88;
-            --neon-orange: #ff6600;
-            --dark-bg: #000811;
-            --grid-color: #001a2e;
-            --wall-color: #0066cc;
-            --wall-glow: #004499;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        body {
-            background: var(--dark-bg);
-            display: flex;
-            flex-direction: column;
-        }
-    </style>
+    <link rel="stylesheet" href="HEX-MAN.css">
 </head>
 
 <body>
 
+    <div id="game-wrapper">
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-section">
+                <div class="hud-label">Score</div>
+                <div class="hud-value score" id="score-display">0</div>
+            </div>
+            <div>
+                <div id="title-text">HEX-MAN</div>
+            </div>
+            <div class="hud-section" style="flex-direction:row;gap:16px;">
+                <div class="hud-section">
+                    <div class="hud-label">Level</div>
+                    <div class="hud-value" id="level-display">1</div>
+                </div>
+                <div class="hud-section">
+                    <div class="hud-label">Lives</div>
+                    <div class="hud-value lives" id="lives-display">⬡⬡⬡</div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Bottom bar -->
+        <div id="bottom-bar">
+            <span>ARROWS / WASD = MOVE</span>
+            <span id="pellets-left">DOTS: 0</span>
+            <span>P = PAUSE</span>
+        </div>
+
+
+        <!-- Scanlines overlay -->
+        <div class="scanlines"></div>
+
+        <!-- Overlay (menu/pause/gameover/levelcomplete) -->
+        <div id="overlay">
+            <div id="overlay-content"
+                style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:460px;padding:28px 32px;background:rgba(0,4,12,0.7);border:1px solid rgba(0,255,255,0.12);box-shadow:0 0 40px rgba(0,255,255,0.05),inset 0 0 40px rgba(0,0,0,0.5);">
+            </div>
+        </div>
+
+    </div>
 
 
 </body>
