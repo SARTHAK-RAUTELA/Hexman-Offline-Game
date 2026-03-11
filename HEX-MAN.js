@@ -493,15 +493,15 @@ const RAW_MAZES = [
 function buildMaze(cols, rows, level) {
     const raw = RAW_MAZES[Math.min(level - 1, 9)];
 
-    //Auto detect actual dimensions from the raw data
+    // Auto-detect actual dimensions from the raw data
     const R = raw.length;
     const C = raw.reduce((m, row) => Math.max(m, row.length), 0);
 
-    //pad all rows to same width
-    const padded = raw.map(row = > row.padEnd(C, '#'));
+    // Pad all rows to same width
+    const padded = raw.map(row => row.padEnd(C, '#'));
 
-    //Build grid
-    constgrid = [];
+    // Build grid
+    const grid = [];
     let spawn = { x: Math.floor(C / 2), y: Math.floor(R / 2) - 3 };
     const ghostSpawns = [];
     let dotCount = 0;
@@ -519,10 +519,60 @@ function buildMaze(cols, rows, level) {
                 case 'T': tile = T.TUNNEL; break;
                 case 'P': tile = T.EMPTY; spawn = { x, y }; break;
                 default: tile = T.EMPTY; break;
-
             }
             grid[y][x] = tile;
         }
     }
+
+    // Find ghost house center for ghost spawns
+    const cx = Math.floor(C / 2);
+    const cy = Math.floor(R / 2);
+    // Place ghosts inside the ghost house
+    for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx += 2) {
+            const gx = cx + dx, gy = cy + dy;
+            if (gx >= 0 && gx < C && gy >= 0 && gy < R && grid[gy][gx] === T.GHOST_HOUSE) {
+                ghostSpawns.push({ x: gx, y: gy });
+            }
+        }
+    }
+    // Always ensure 4 ghost spawns
+    while (ghostSpawns.length < 4) {
+        ghostSpawns.push({ x: cx, y: cy });
+    }
+
+    // ── Flood-fill safety: remove any unreachable dots ──────────
+    const reachable = Array.from({ length: R }, () => Array(C).fill(false));
+    const queue = [[spawn.x, spawn.y]];
+    reachable[spawn.y][spawn.x] = true;
+    const passable = t => t === T.DOT || t === T.POWER || t === T.EMPTY || t === T.TUNNEL;
+
+    while (queue.length) {
+        const [qx, qy] = queue.shift();
+        for (const [ddx, ddy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+            let nx = qx + ddx, ny = qy + ddy;
+            if (nx < 0) nx = C - 1;
+            if (nx >= C) nx = 0;
+            if (ny < 0 || ny >= R) continue;
+            if (!reachable[ny][nx] && passable(grid[ny][nx])) {
+                reachable[ny][nx] = true;
+                queue.push([nx, ny]);
+            }
+        }
+    }
+
+    // remove unreachable dots (make them walls)
+    dotCount = 0;
+    for (let y = 0; y < R; y++) {
+        for (let x = 0; x < C; x++) {
+            if ((grid[y][x] === T.DOT || grid[y][x] === T.POWER) && !reachable[y][x]) {
+                grid[y][x] = T.WALL;
+            } else if (grid[y][x] === T.DOT || grid[y][x] === T.POWER) {
+                dotCount++;
+            }
+        }
+    }
+
+    return { grid, cols: C, rows: R, spawn, ghostSpawns, dotCount };
 
 }
