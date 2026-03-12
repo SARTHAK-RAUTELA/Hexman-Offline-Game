@@ -576,3 +576,475 @@ function buildMaze(cols, rows, level) {
     return { grid, cols: C, rows: R, spawn, ghostSpawns, dotCount };
 
 }
+
+
+// ─── PARTICLE SYSTEM ─────────────────────────────────────────
+class ParticleSystem {
+    constructor() { this.particles = []; }
+
+    spawn(x, y, color, count = 8, speed = 2, life = 0.6) {
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+            const spd = speed * (0.5 + Math.random());
+            this.particles.push({
+                x, y,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd,
+                life, maxLife: life,
+                color, size: 2 + Math.random() * 3,
+                type: Math.random() > 0.5 ? 'circle' : 'square'
+            });
+        }
+    }
+
+    spawnText(x, y, text, color = '#ffff00') {
+        this.particles.push({
+            x, y, vx: 0, vy: -1.5,
+            life: 1.0, maxLife: 1.0,
+            color, text, size: 14,
+            type: 'text'
+        });
+    }
+
+    update(dt) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.05; // gravity
+            p.life -= dt;
+            if (p.life <= 0) this.particles.splice(i, 1);
+        }
+    }
+
+    draw(ctx) {
+        for (const p of this.particles) {
+            const alpha = p.life / p.maxLife;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = p.color;
+            if (p.type === 'text') {
+                ctx.font = `bold ${p.size}px 'Orbitron', monospace`;
+                ctx.fillText(p.text, p.x, p.y);
+            } else if (p.type === 'circle') {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size * alpha, p.size * alpha);
+            }
+            ctx.restore();
+        }
+    }
+}
+
+
+// ─── HEXMAN (PLAYER) ─────────────────────────────────────────
+class HexMan {
+    constructor(x, y) {
+        this.tileX = x;
+        this.tileY = y;
+        this.pixelX = x * TILE + TILE / 2;
+        this.pixelY = y * TILE + TILE / 2;
+        this.dir = DIR.RIGHT;
+        this.nextDir = DIR.RIGHT;
+        this.speed = 2.5; // px/frame at 60fps equivalent
+        this.moving = false;
+        this.mouthAngle = 0.3;
+        this.mouthDir = 1;
+        this.alive = true;
+        this.deathAnim = 0; // 0=alive, >0=dying
+        // radius is dynamic getter
+        this.powerMode = false;
+        this.powerTimer = 0;
+    }
+
+    get radius() { return TILE * 0.42; }
+
+    setDir(d) { this.nextDir = d; }
+
+    canMove(tileX, tileY, maze) {
+        if (tileX < 0) return true; // tunnel
+        if (tileX >= maze.cols) return true;
+        if (tileY < 0 || tileY >= maze.rows) return false;
+        const t = maze.grid[tileY][tileX];
+        return t !== T.WALL && t !== T.GHOST_HOUSE;
+    }
+
+    update(dt, maze) {
+        if (!this.alive) {
+            this.deathAnim += dt * 2;
+            return;
+        }
+
+        // Animate mouth
+        this.mouthAngle += this.mouthDir * 0.12;
+        if (this.mouthAngle > 0.35) this.mouthDir = -1;
+        if (this.mouthAngle < 0.02) this.mouthDir = 1;
+
+        // Power mode timer
+        if (this.powerMode) {
+            this.powerTimer -= dt;
+            if (this.powerTimer <= 0) { this.powerMode = false; }
+        }
+
+        // Center of current tile (target for alignment)
+        const targetX = this.tileX * TILE + TILE / 2;
+        const targetY = this.tileY * TILE + TILE / 2;
+
+        // How close to center?
+        const dx = targetX - this.pixelX;
+        const dy = targetY - this.pixelY;
+        const distToCenter = Math.sqrt(dx * dx + dy * dy);
+
+        if (distToCenter < this.speed * 1.5) {
+            // Snap to center then try new direction
+            this.pixelX = targetX;
+            this.pixelY = targetY;
+
+            // Tunnel wrap
+            if (this.tileX < 0) { this.tileX = maze.cols - 1; this.pixelX = this.tileX * TILE + TILE / 2; }
+            if (this.tileX >= maze.cols) { this.tileX = 0; this.pixelX = TILE / 2; }
+
+            // Try next direction first
+            const nxt = this.nextDir;
+            const ntx = this.tileX + nxt.x;
+            const nty = this.tileY + nxt.y;
+            if (this.canMove(ntx, nty, maze)) {
+                this.dir = this.nextDir;
+            }
+            // Try current direction
+            const ctx2 = this.tileX + this.dir.x;
+            const cty = this.tileY + this.dir.y;
+            if (this.canMove(ctx2, cty, maze)) {
+                this.tileX += this.dir.x;
+                this.tileY += this.dir.y;
+                // Wrap tunnels
+                if (this.tileX < 0) this.tileX = maze.cols - 1;
+                if (this.tileX >= maze.cols) this.tileX = 0;
+                this.moving = true;
+            } else {
+                this.moving = false;
+            }
+        } else {
+            // Move towards center
+            const speed = this.speed;
+            if (Math.abs(dx) > 0.5) this.pixelX += Math.sign(dx) * Math.min(speed, Math.abs(dx));
+            if (Math.abs(dy) > 0.5) this.pixelY += Math.sign(dy) * Math.min(speed, Math.abs(dy));
+            this.moving = true;
+        }
+    }
+
+    draw(ctx, screenShake) {
+        if (!this.alive && this.deathAnim >= 1.2) return;
+
+        ctx.save();
+        ctx.translate(this.pixelX, this.pixelY);
+
+        if (!this.alive) {
+            // Death animation: shrink and spin
+            const scale = Math.max(0, 1 - this.deathAnim / 1.2);
+            const rotation = this.deathAnim * Math.PI * 3;
+            ctx.rotate(rotation);
+            ctx.scale(scale, scale);
+        } else {
+            // Face direction
+            if (this.dir === DIR.RIGHT) ctx.rotate(0);
+            else if (this.dir === DIR.LEFT) ctx.rotate(Math.PI);
+            else if (this.dir === DIR.UP) ctx.rotate(-Math.PI / 2);
+            else if (this.dir === DIR.DOWN) ctx.rotate(Math.PI / 2);
+        }
+
+        const r = this.radius;
+        const mouth = this.alive ? this.mouthAngle : 0;
+
+        // Glow
+        if (this.powerMode) {
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = '#ff00ff';
+        } else {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#ffff00';
+        }
+
+        // Body
+        ctx.fillStyle = this.powerMode ? '#ff88ff' : '#ffff00';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r, mouth * Math.PI, (2 - mouth) * Math.PI);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hex detail on body
+        ctx.strokeStyle = this.powerMode ? '#dd00dd' : '#cccc00';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Eye
+        const eyeR = r * 0.15;
+        ctx.fillStyle = '#000';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(r * 0.25, -r * 0.45, eyeR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+// ─── GHOST ───────────────────────────────────────────────────
+class Ghost {
+    constructor(def, tileX, tileY, exitDelay) {
+        this.def = def;
+        this.tileX = tileX;
+        this.tileY = tileY;
+        this.pixelX = tileX * TILE + TILE / 2;
+        this.pixelY = tileY * TILE + TILE / 2;
+        this.dir = DIR.UP;
+        this.speed = 2.0;
+        this.state = 'house'; // house, chase, scatter, frightened, eaten
+        this.exitDelay = exitDelay; // frames before leaving house
+        this.exitTimer = exitDelay;
+        this.scatterTimer = 0;
+        this.chaseTimer = 0;
+        this.frightenTimer = 0;
+        this.eatTimer = 0;
+        this.ghostScore = 200;
+        this.bodyOsc = 0;
+        this.alive = true;
+        this.exitY = null; // target Y to exit house
+    }
+
+    frighten(duration) {
+        if (this.state === 'eaten') return;
+        this.state = 'frightened';
+        this.frightenTimer = duration;
+        // Reverse direction
+        this.dir = { x: -this.dir.x, y: -this.dir.y };
+    }
+
+    eat() {
+        this.state = 'eaten';
+        this.frightenTimer = 0;
+    }
+
+    getTarget(player, ghosts, maze) {
+        const px = player.tileX, py = player.tileY;
+        const pd = player.dir;
+
+        switch (this.def.name) {
+            case 'ALPHA': // Direct chase
+                return { x: px, y: py };
+            case 'BETA': // Ambush - 4 tiles ahead
+                return { x: px + pd.x * 4, y: py + pd.y * 4 };
+            case 'GAMMA': { // Flanker - vector from alpha to 2 tiles ahead
+                const alpha = ghosts.find(g => g.def.name === 'ALPHA');
+                if (!alpha) return { x: px, y: py };
+                const midX = px + pd.x * 2, midY = py + pd.y * 2;
+                return { x: midX + (midX - alpha.tileX), y: midY + (midY - alpha.tileY) };
+            }
+            case 'DELTA': { // Shy - chase if far, scatter if close
+                const d = Math.abs(px - this.tileX) + Math.abs(py - this.tileY);
+                if (d > 8) return { x: px, y: py };
+                // Go to scatter corner
+                const sc = this.def.scatter;
+                return {
+                    x: sc.x < 0 ? 0 : (sc.x > 0 ? maze.cols - 1 : Math.floor(maze.cols / 2)),
+                    y: sc.y < 0 ? 0 : (sc.y > 0 ? maze.rows - 1 : Math.floor(maze.rows / 2))
+                };
+            }
+            default: return { x: px, y: py };
+        }
+    }
+
+    chooseDir(target, maze) {
+        // Can't reverse unless frightened/eaten
+        const reverse = { x: -this.dir.x, y: -this.dir.y };
+        let best = null, bestDist = Infinity;
+
+        for (const d of DIRS) {
+            if (d.x === reverse.x && d.y === reverse.y && this.state !== 'frightened') continue;
+            const nx = this.tileX + d.x, ny = this.tileY + d.y;
+            if (nx < 0 || nx >= maze.cols || ny < 0 || ny >= maze.rows) continue;
+            const t = maze.grid[ny][nx];
+            if (t === T.WALL) continue;
+            if (t === T.GHOST_HOUSE && this.state !== 'house' && this.state !== 'eaten') continue;
+
+            const dist = Math.abs(nx - target.x) + Math.abs(ny - target.y);
+            if (this.state === 'frightened') {
+                // Random movement
+                if (Math.random() < 0.4) { best = d; break; }
+            }
+            if (dist < bestDist) { bestDist = dist; best = d; }
+        }
+        return best || this.dir;
+    }
+
+    update(dt, maze, player, ghosts, levelCfg) {
+        this.bodyOsc += dt * 8;
+
+        const spd = this.speed * levelCfg.ghostSpd;
+
+        // Handle exit from ghost house
+        if (this.state === 'house') {
+            this.exitTimer -= 1;
+            if (this.exitTimer <= 0) {
+                this.state = 'scatter';
+                this.scatterTimer = 7;
+            } else {
+                // Bob in house
+                this.pixelY = this.tileY * TILE + TILE / 2 + Math.sin(this.bodyOsc) * 4;
+                return;
+            }
+        }
+
+        // State timers
+        if (this.state === 'scatter') {
+            this.scatterTimer -= dt;
+            if (this.scatterTimer <= 0) { this.state = 'chase'; this.chaseTimer = 20; }
+        } else if (this.state === 'chase') {
+            this.chaseTimer -= dt;
+            if (this.chaseTimer <= 0) { this.state = 'scatter'; this.scatterTimer = 7; }
+        } else if (this.state === 'frightened') {
+            this.frightenTimer -= dt;
+            if (this.frightenTimer <= 0) { this.state = 'chase'; this.chaseTimer = 15; }
+        } else if (this.state === 'eaten') {
+            // Return to ghost house center
+            this.eatTimer += dt;
+        }
+
+        // Determine target
+        let target;
+        if (this.state === 'scatter') {
+            const sc = this.def.scatter;
+            target = {
+                x: sc.x < 0 ? 1 : (sc.x > 0 ? maze.cols - 2 : Math.floor(maze.cols / 2)),
+                y: sc.y < 0 ? 1 : (sc.y > 0 ? maze.rows - 2 : Math.floor(maze.rows / 2))
+            };
+        } else if (this.state === 'eaten') {
+            target = { x: Math.floor(maze.cols / 2), y: Math.floor(maze.rows / 2) };
+        } else {
+            target = this.getTarget(player, ghosts, maze);
+        }
+
+        // Tile-based movement
+        const targetPX = this.tileX * TILE + TILE / 2;
+        const targetPY = this.tileY * TILE + TILE / 2;
+        const dx = targetPX - this.pixelX;
+        const dy = targetPY - this.pixelY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < spd * 1.5) {
+            this.pixelX = targetPX;
+            this.pixelY = targetPY;
+
+            // Tunnel wrap
+            if (this.tileX <= 0 && this.dir.x < 0) { this.tileX = maze.cols - 1; this.pixelX = this.tileX * TILE + TILE / 2; }
+            if (this.tileX >= maze.cols - 1 && this.dir.x > 0) { this.tileX = 0; this.pixelX = TILE / 2; }
+
+            // Choose next direction at tile center
+            this.dir = this.chooseDir(target, maze);
+            this.tileX += this.dir.x;
+            this.tileY += this.dir.y;
+
+            // Clamp
+            this.tileX = Math.max(0, Math.min(maze.cols - 1, this.tileX));
+            this.tileY = Math.max(0, Math.min(maze.rows - 1, this.tileY));
+
+            // Check if eaten ghost returned home
+            if (this.state === 'eaten') {
+                const centerX = Math.floor(maze.cols / 2);
+                const centerY = Math.floor(maze.rows / 2);
+                if (Math.abs(this.tileX - centerX) < 2 && Math.abs(this.tileY - centerY) < 2) {
+                    this.state = 'scatter'; this.scatterTimer = 5;
+                    this.tileX = centerX; this.tileY = centerY;
+                }
+            }
+        } else {
+            const spd2 = this.state === 'frightened' ? spd * 0.6 : (this.state === 'eaten' ? spd * 1.8 : spd);
+            this.pixelX += Math.sign(dx) * Math.min(spd2, Math.abs(dx));
+            this.pixelY += Math.sign(dy) * Math.min(spd2, Math.abs(dy));
+        }
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.pixelX, this.pixelY);
+        const r = TILE * 0.42;
+        const bob = Math.sin(this.bodyOsc) * 1.5;
+        const fr = this.state === 'frightened';
+        const nearEnd = fr && this.frightenTimer < 2;
+        const eaten = this.state === 'eaten';
+
+        // Glow
+        ctx.shadowBlur = fr ? 20 : 12;
+        ctx.shadowColor = fr ? (nearEnd ? '#ffffff' : '#0044ff') : this.def.color;
+
+        // Body color
+        let bodyColor;
+        if (eaten) bodyColor = 'transparent';
+        else if (fr) bodyColor = nearEnd ? (Math.floor(Date.now() / 200) % 2 === 0 ? '#ffffff' : '#0044ff') : '#2222bb';
+        else bodyColor = this.def.color;
+
+        if (!eaten) {
+            // Ghost body shape
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath();
+            // Head (semicircle)
+            ctx.arc(0, bob - r * 0.2, r, Math.PI, 0);
+            // Skirt with wiggly bottom
+            const skirtY = bob + r * 0.9;
+            ctx.lineTo(r, skirtY);
+            // Wiggly bottom
+            const waves = 3;
+            const waveW = (r * 2) / waves;
+            for (let i = 0; i < waves; i++) {
+                const wx = r - i * waveW;
+                ctx.quadraticCurveTo(wx - waveW * 0.25, skirtY + r * 0.35, wx - waveW * 0.5, skirtY);
+                ctx.quadraticCurveTo(wx - waveW * 0.75, skirtY - r * 0.15, wx - waveW, skirtY);
+            }
+            ctx.lineTo(-r, bob - r * 0.2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Eyes
+            if (!fr) {
+                // White part
+                ctx.fillStyle = '#fff';
+                ctx.shadowBlur = 0;
+                ctx.beginPath(); ctx.ellipse(-r * 0.32, bob - r * 0.15, r * 0.25, r * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(r * 0.32, bob - r * 0.15, r * 0.25, r * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+                // Pupils
+                ctx.fillStyle = '#0033ff';
+                const pupilOffX = this.dir.x * r * 0.1;
+                const pupilOffY = this.dir.y * r * 0.1;
+                ctx.beginPath(); ctx.ellipse(-r * 0.32 + pupilOffX, bob - r * 0.15 + pupilOffY, r * 0.12, r * 0.15, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(r * 0.32 + pupilOffX, bob - r * 0.15 + pupilOffY, r * 0.12, r * 0.15, 0, 0, Math.PI * 2); ctx.fill();
+            } else {
+                // Scared eyes: X or blinking
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 8px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('><', 0, bob - r * 0.1);
+            }
+        } else {
+            // Just eyes when eaten
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(-r * 0.32, bob, r * 0.2, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(r * 0.32, bob, r * 0.2, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#0033ff';
+            ctx.beginPath(); ctx.ellipse(-r * 0.32, bob, r * 0.1, r * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(r * 0.32, bob, r * 0.1, r * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Name tag
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '6px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.def.name[0], 0, bob + r * 1.6);
+
+        ctx.restore();
+    }
+}
