@@ -1048,3 +1048,97 @@ class Ghost {
         ctx.restore();
     }
 }
+
+// ─── MAZE RENDERER ───────────────────────────────────────────
+function drawMaze(ctx, maze, frame, levelColor) {
+    const { grid, cols, rows } = maze;
+
+    // First pass: fill all non-wall backgrounds
+    ctx.fillStyle = '#000811';
+    ctx.fillRect(0, 0, cols * TILE, rows * TILE);
+
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            const t = grid[y][x];
+            const px = x * TILE, py = y * TILE;
+
+            if (t === T.WALL) {
+                // Wall fill
+                ctx.fillStyle = levelColor + '28';
+                ctx.fillRect(px, py, TILE, TILE);
+                // Neon border
+                ctx.strokeStyle = levelColor;
+                ctx.lineWidth = Math.max(1, TILE * 0.07);
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = levelColor;
+                ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
+                ctx.shadowBlur = 0;
+
+            } else if (t === T.GHOST_HOUSE) {
+                ctx.fillStyle = '#110022';
+                ctx.fillRect(px, py, TILE, TILE);
+                ctx.strokeStyle = '#550088';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(px, py, TILE, TILE);
+
+            } else if (t === T.DOT) {
+                const dotR = Math.max(2, TILE * 0.11);
+                ctx.fillStyle = '#ffffffcc';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(px + TILE / 2, py + TILE / 2, dotR, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+            } else if (t === T.POWER) {
+                const blink = Math.floor(frame / 15) % 2 === 0;
+                if (blink) {
+                    const pelletR = Math.max(4, TILE * 0.28);
+                    ctx.fillStyle = '#ff88ff';
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = '#ff00ff';
+                    ctx.beginPath();
+                    ctx.arc(px + TILE / 2, py + TILE / 2, pelletR, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+            } else if (t === T.TUNNEL) {
+                // Draw tunnel as open corridor with arrow hint
+                ctx.fillStyle = '#000811';
+                ctx.fillRect(px, py, TILE, TILE);
+                ctx.fillStyle = levelColor + '33';
+                ctx.fillRect(px, py + TILE * 0.3, TILE, TILE * 0.4);
+
+            } else {
+                // Empty passage
+                ctx.fillStyle = '#000811';
+                ctx.fillRect(px, py, TILE, TILE);
+            }
+        }
+    }
+
+    // Subtle grid overlay
+    ctx.strokeStyle = 'rgba(0,102,204,0.03)';
+    ctx.lineWidth = 0.5;
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);
+        }
+    }
+}
+
+// ─── SCREEN SHAKE ─────────────────────────────────────────────
+class ScreenShake {
+    constructor() { this.intensity = 0; this.duration = 0; }
+    shake(intensity, duration) { this.intensity = intensity; this.duration = duration; }
+    update(dt) { if (this.duration > 0) { this.duration -= dt; if (this.duration < 0) this.duration = 0; } }
+    getOffset() {
+        if (this.duration <= 0) return { x: 0, y: 0 };
+        return {
+            x: (Math.random() - 0.5) * this.intensity * 2,
+            y: (Math.random() - 0.5) * this.intensity * 2
+        };
+    }
+}
