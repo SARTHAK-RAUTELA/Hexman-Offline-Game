@@ -20,31 +20,16 @@ let TILE = 20; // computed dynamically per level
 // Compute best tile size to fill the viewport for given maze dims
 function computeTile(cols, rows) {
     // Measure actual HUD and bottom bar heights dynamically
-    const hudE1 = document.getElementById('hud');
-    const botE1 = document.getElementById('bottom-bar');
-    let hudH;
-
-    if (hudEl) {
-        hudH = hudEl.offsetHeight;
-    } else {
-        hudH = 54;
-    }
-
-    let botH;
-
-    if (botEl) {
-        botH = botEl.offsetHeight;
-    } else {
-        botH = 30;
-    }
-
+    const hudEl = document.getElementById('hud');
+    const botEl = document.getElementById('bottom-bar');
+    const hudH = hudEl ? hudEl.offsetHeight : 54;
+    const botH = botEl ? botEl.offsetHeight : 30;
     const maxW = window.innerWidth;
     const maxH = window.innerHeight - hudH - botH;
     const tileW = Math.floor(maxW / cols);
     const tileH = Math.floor(maxH / rows);
-
+    // No upper cap — use whatever fills the screen
     return Math.max(14, Math.min(tileW, tileH));
-
 }
 
 // Level configs: cols, rows, ghost speed multiplier, dots bonus, fruit score
@@ -68,7 +53,7 @@ const T = { WALL: 0, DOT: 1, EMPTY: 2, POWER: 3, GHOST_HOUSE: 4, TUNNEL: 5 };
 const DIR = { UP: { x: 0, y: -1 }, DOWN: { x: 0, y: 1 }, LEFT: { x: -1, y: 0 }, RIGHT: { x: 1, y: 0 }, NONE: { x: 0, y: 0 } };
 const DIRS = [DIR.UP, DIR.DOWN, DIR.LEFT, DIR.RIGHT];
 
-// ghost coloors and personalities
+// Ghost colors & personalities
 const GHOST_DEFS = [
     { name: 'ALPHA', color: '#ff3333', eyeColor: '#fff', scatter: { x: 0, y: 0 } }, // Blinky-like
     { name: 'BETA', color: '#ff88ff', eyeColor: '#fff', scatter: { x: -1, y: 0 } }, // Pinky-like
@@ -183,14 +168,11 @@ class AudioEngine {
 
 const audio = new AudioEngine();
 
-
 // ─── MAZE GENERATOR ──────────────────────────────────────────
 // 10 handcrafted mazes. Each string row uses:
 //   # = wall   . = dot   o = power pellet
 //   G = ghost house   T = tunnel exit   P = player spawn   (space) = empty corridor
 //
-
-
 // Rules followed in every maze:
 //  • Symmetric left↔right
 //  • All dots flood-fill reachable from P
@@ -198,10 +180,8 @@ const audio = new AudioEngine();
 //  • Tunnel row exits on both sides
 //  • Levels grow in size: 21→21→23→23→25→25→27→27→29→29 cols
 
-
-
 const RAW_MAZES = [
-    // ── LEVEL 1 ───────────────────────────────────────────────
+    // ── LEVEL 1 ── 21×23 ── Simple open layout ──────────────
     ['#####################',
         '#o#.............#..o#',
         '#.#########.#.###.#.#',
@@ -489,7 +469,8 @@ const RAW_MAZES = [
         '#o............#............o#',
         '#############################']];
 
-//raw maze string array into the tile grid + metadata
+
+// Parse a raw maze string array into the tile grid + metadata
 function buildMaze(cols, rows, level) {
     const raw = RAW_MAZES[Math.min(level - 1, 9)];
 
@@ -561,7 +542,7 @@ function buildMaze(cols, rows, level) {
         }
     }
 
-    // remove unreachable dots (make them walls)
+    // Remove unreachable dots (make them walls)
     dotCount = 0;
     for (let y = 0; y < R; y++) {
         for (let x = 0; x < C; x++) {
@@ -574,9 +555,7 @@ function buildMaze(cols, rows, level) {
     }
 
     return { grid, cols: C, rows: R, spawn, ghostSpawns, dotCount };
-
 }
-
 
 // ─── PARTICLE SYSTEM ─────────────────────────────────────────
 class ParticleSystem {
@@ -637,7 +616,6 @@ class ParticleSystem {
         }
     }
 }
-
 
 // ─── HEXMAN (PLAYER) ─────────────────────────────────────────
 class HexMan {
