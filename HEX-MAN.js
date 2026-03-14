@@ -1142,3 +1142,417 @@ class ScreenShake {
         };
     }
 }
+
+// ─── MAIN GAME STATE ─────────────────────────────────────────
+const Game = {
+  state: 'menu', // menu, playing, paused, dying, levelcomplete, gameover
+  level: 1,
+  score: 0,
+  highScore: 0,
+  lives: 3,
+  frame: 0,
+  maze: null,
+  player: null,
+  ghosts: [],
+  particles: new ParticleSystem(),
+  shake: new ScreenShake(),
+  ghostEatCombo: 0, // for 200,400,800,1600 chain
+  stateTimer: 0,
+  dotCount: 0,
+
+  init() {
+    this.score = 0;
+    this.lives = 3;
+    this.level = 1;
+    this.highScore = parseInt(localStorage.getItem('hexman_hi')||'0');
+    this.startLevel();
+  },
+
+  startLevel() {
+    const cfg = LEVEL_CONFIGS[Math.min(this.level-1, 9)];
+    const maze = buildMaze(cfg.cols, cfg.rows, this.level);
+    this.maze = maze;
+    this.dotCount = maze.dotCount;
+
+    // Compute tile size to fill viewport, then resize canvas
+    TILE = computeTile(maze.cols, maze.rows);
+    canvas.width  = maze.cols * TILE;
+    canvas.height = maze.rows * TILE;
+
+    // Resize wrapper to match
+    const wrapper = document.getElementById('game-wrapper');
+    wrapper.style.width = canvas.width + 'px';
+
+    this.player = new HexMan(maze.spawn.x, maze.spawn.y);
+    this.player.speed = 2.5 + (this.level-1)*0.08;
+
+    this.ghosts = [];
+    const numGhosts = Math.min(4, 1 + Math.floor(this.level/2));
+    for (let i=0; i<numGhosts; i++) {
+      const sp = maze.ghostSpawns[i] || maze.ghostSpawns[0];
+      const delay = i * 120 + 60;
+      const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, delay);
+      g.speed = 1.8 + (this.level-1)*0.06;
+      this.ghosts.push(g);
+    }
+
+    this.ghostEatCombo = 0;
+    this.particles = new ParticleSystem();
+
+    // Update UI
+    this.updateHUD();
+
+    audio.startBgLoop(this.level);
+    this.state = 'frozen'; // wait for ENGAGE click
+    this.stateTimer = 0;
+  },
+
+  restartLevel() {
+    // Keep score and lives, restart maze
+    const cfg = LEVEL_CONFIGS[Math.min(this.level-1, 9)];
+    const maze = buildMaze(cfg.cols, cfg.rows, this.level);
+    this.maze = maze;
+    this.dotCount = maze.dotCount;
+
+    TILE = computeTile(maze.cols, maze.rows);
+    canvas.width  = maze.cols * TILE;
+    canvas.height = maze.rows * TILE;
+    document.getElementById('game-wrapper').style.width = canvas.width + 'px';
+
+    this.player = new HexMan(maze.spawn.x, maze.spawn.y);
+    this.player.speed = 2.5 + (this.level-1)*0.08;
+    this.ghosts = [];
+    const numGhosts = Math.min(4, 1 + Math.floor(this.level/2));
+    for (let i=0; i<numGhosts; i++) {
+      const sp = maze.ghostSpawns[i]||maze.ghostSpawns[0];
+      const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, i*120+60);
+      g.speed = 1.8+(this.level-1)*0.06;
+      this.ghosts.push(g);
+    }
+    this.ghostEatCombo = 0;
+    this.state = 'frozen';
+    this.stateTimer = 0;
+    this.updateHUD();
+    this.startCountdown();
+  },
+
+  startCountdown() {
+    this.state = 'countdown';
+    this.countdownValue = 3;
+    this.countdownTimer = 0;
+    audio.startJingle();
+  },
+
+  updateHUD() {
+    document.getElementById('score-display').textContent = this.score.toString().padStart(6,'0');
+    document.getElementById('level-display').textContent = this.level;
+    const lifeStr = '⬡'.repeat(this.lives);
+    document.getElementById('lives-display').textContent = lifeStr || '✕';
+    document.getElementById('pellets-left').textContent = `DOTS: ${this.dotCount}`;
+  },
+
+  addScore(pts) {
+    this.score += pts;
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      localStorage.setItem('hexman_hi', this.highScore);
+    }
+    this.updateHUD();
+  },
+
+  eatDot(x, y) {
+    const cfg = LEVEL_CONFIGS[Math.min(this.level-1,9)];
+    const pts = Math.round(10 * cfg.dotBonus);
+    this.addScore(pts);
+    this.dotCount--;
+    this.updateHUD();
+    audio.eatDot();
+    this.particles.spawn(x, y, '#ffffffaa', 4, 1.5, 0.3);
+    if (this.dotCount <= 0) this.levelComplete();
+  },
+
+  eatPower(x, y) {
+    this.addScore(50);
+    this.dotCount--;
+    this.updateHUD();
+    audio.eatPower();
+    this.particles.spawn(x, y, '#ff88ff', 12, 3, 0.8);
+    this.shake.shake(4, 0.3);
+    // Frighten all ghosts
+    const dur = Math.max(4, 8 - (this.level-1)*0.7);
+    for (const g of this.ghosts) g.frighten(dur);
+    this.player.powerMode = true;
+    this.player.powerTimer = dur;
+    this.ghostEatCombo = 0;
+    audio.powerMode(true);
+    if (this.dotCount <= 0) this.levelComplete();
+  },
+
+  eatGhost(ghost) {
+    this.ghostEatCombo++;
+    const pts = 200 * Math.pow(2, this.ghostEatCombo-1);
+    this.addScore(pts);
+    audio.eatGhost();
+    this.particles.spawn(ghost.pixelX, ghost.pixelY, ghost.def.color, 16, 4, 1.0);
+    this.particles.spawnText(ghost.pixelX-20, ghost.pixelY, '+'+pts, '#ffff00');
+    this.shake.shake(3, 0.2);
+    ghost.eat();
+  },
+
+  playerDied() {
+    this.state = 'dying';
+    this.stateTimer = 2.5;
+    this.player.alive = false;
+    audio.death();
+    this.particles.spawn(this.player.pixelX, this.player.pixelY, '#ffff00', 20, 5, 1.5);
+    this.shake.shake(8, 0.5);
+  },
+
+  levelComplete() {
+    this.state = 'levelcomplete';
+    this.stateTimer = 2.5;
+    audio.levelComplete();
+    // Celebrate
+    for (let i=0; i<5; i++) {
+      setTimeout(() => {
+        this.particles.spawn(
+          Math.random()*canvas.width, Math.random()*canvas.height,
+          ['#ffff00','#ff00ff','#00ffff','#00ff88'][Math.floor(Math.random()*4)],
+          10, 4, 1.2
+        );
+      }, i*200);
+    }
+    if (this.level >= 10) {
+      // Game won
+      setTimeout(() => this.showGameWin(), 2600);
+    } else {
+      setTimeout(() => {
+        this.level++;
+        // Bonus life on level up, capped at 3
+        if (this.lives < 3) this.lives++;
+        this.startLevel(); // sets state = 'frozen'
+        showOverlay('levelintro');
+      }, 2600);
+    }
+  },
+
+  update(dt) {
+    if (this.state === 'countdown') {
+      this.countdownTimer += dt;
+      if (this.countdownTimer >= 1.0) {
+        this.countdownTimer = 0;
+        this.countdownValue--;
+        if (this.countdownValue < 0) {
+          this.state = 'playing';
+        } else {
+          // Beep on each count
+          audio._beep(this.countdownValue === 0 ? 880 : 440, 0.18, 'square', 0.3);
+        }
+      }
+      this.particles.update(dt);
+      return;
+    }
+
+    if (this.state === 'frozen') {
+      // Draw static maze behind overlay
+      const cfg2 = LEVEL_CONFIGS[Math.min(this.level-1,9)];
+      ctx.fillStyle = '#000811';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawMaze(ctx, this.maze, 0, cfg2.color);
+      if (this.player) this.player.draw(ctx, {x:0,y:0});
+      for (const g of this.ghosts) g.draw(ctx);
+      return;
+    }
+
+    if (this.state === 'playing') {
+      this.frame++;
+      this.shake.update(dt);
+      this.particles.update(dt);
+
+      // Update player
+      this.player.update(dt, this.maze);
+
+      // Check dot/power eating
+      const px = this.player.tileX, py = this.player.tileY;
+      if (px>=0 && px<this.maze.cols && py>=0 && py<this.maze.rows) {
+        const tile = this.maze.grid[py][px];
+        if (tile===T.DOT) {
+          this.maze.grid[py][px]=T.EMPTY;
+          this.eatDot(this.player.pixelX, this.player.pixelY);
+        } else if (tile===T.POWER) {
+          this.maze.grid[py][px]=T.EMPTY;
+          this.eatPower(this.player.pixelX, this.player.pixelY);
+        }
+      }
+
+      // Update ghosts
+      const cfg = LEVEL_CONFIGS[Math.min(this.level-1,9)];
+      for (const g of this.ghosts) {
+        g.update(dt, this.maze, this.player, this.ghosts, cfg);
+
+        // Collision with player
+        const dx = g.pixelX - this.player.pixelX;
+        const dy = g.pixelY - this.player.pixelY;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        if (dist < TILE*0.75) {
+          if (g.state==='frightened') {
+            this.eatGhost(g);
+          } else if (g.state!=='eaten' && this.player.alive) {
+            // Player dies
+            this.lives--;
+            this.updateHUD();
+            this.playerDied();
+            if (this.lives <= 0) {
+              // No lives left — restart whole game from level 1
+              setTimeout(() => this.gameOver(), 2600);
+            } else {
+              // Still have lives — respawn in same level, same maze
+              setTimeout(() => this.respawnInLevel(), 2600);
+            }
+          }
+        }
+      }
+
+    } else if (this.state === 'dying' || this.state === 'levelcomplete') {
+      this.particles.update(dt);
+      this.shake.update(dt);
+      if (!this.player.alive) this.player.update(dt, this.maze);
+    }
+  },
+
+  draw() {
+    // Screen shake
+    const offset = this.shake.getOffset();
+    ctx.save();
+    ctx.translate(offset.x, offset.y);
+
+    // Clear
+    ctx.fillStyle = '#000811';
+    ctx.fillRect(-10, -10, canvas.width+20, canvas.height+20);
+
+    // Draw maze
+    const cfg = LEVEL_CONFIGS[Math.min(this.level-1,9)];
+    drawMaze(ctx, this.maze, this.frame, cfg.color);
+
+    // Draw player
+    if (this.player) this.player.draw(ctx, offset);
+
+    // Draw ghosts
+    for (const g of this.ghosts) g.draw(ctx);
+
+    // Particles
+    this.particles.draw(ctx);
+
+    ctx.restore();
+
+    // Level state overlays (drawn on top without shake)
+    if (this.state === 'levelcomplete') {
+      ctx.fillStyle = 'rgba(0,8,17,0.5)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `bold 28px 'Orbitron', sans-serif`;
+      ctx.fillStyle = cfg.color;
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = cfg.color;
+      ctx.textAlign = 'center';
+      ctx.fillText('LEVEL CLEAR!', canvas.width/2, canvas.height/2-20);
+      ctx.font = `14px 'Orbitron', sans-serif`;
+      ctx.fillStyle = '#ffff00';
+      ctx.shadowColor = '#ffff00';
+      if (this.level < 10) {
+        ctx.fillText(`ENTERING ${LEVEL_CONFIGS[this.level].name}`, canvas.width/2, canvas.height/2+20);
+      }
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'left';
+    }
+
+    if (this.state === 'dying') {
+      if (this.lives <= 0) {
+        ctx.fillStyle = 'rgba(0,8,17,0.5)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.font=`bold 24px 'Orbitron',sans-serif`;
+        ctx.fillStyle='#ff3333';
+        ctx.shadowBlur=20; ctx.shadowColor='#ff3333';
+        ctx.textAlign='center';
+        ctx.fillText('SYSTEM FAILURE', canvas.width/2, canvas.height/2);
+        ctx.shadowBlur=0; ctx.textAlign='left';
+      }
+    }
+
+    // Countdown overlay
+    if (this.state === 'countdown') {
+      ctx.fillStyle = 'rgba(0,8,17,0.55)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const label = this.countdownValue === 0 ? 'GO!' : String(this.countdownValue);
+      const progress = this.countdownTimer; // 0..1
+      const scale = 1 + (1 - progress) * 0.6; // zoom in as time passes
+      const alpha = this.countdownValue === 0 ? Math.min(1, progress * 3) : 1;
+      const color = this.countdownValue === 0 ? '#00ff88' : '#00ffff';
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(scale, scale);
+      ctx.globalAlpha = alpha;
+      ctx.font = `bold ${this.countdownValue === 0 ? 56 : 72}px 'Orbitron', sans-serif`;
+      ctx.fillStyle = color;
+      ctx.shadowBlur = 40;
+      ctx.shadowColor = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, 0, 0);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+    }
+
+    // Paused
+    if (this.state === 'paused') {
+      ctx.fillStyle = 'rgba(0,8,17,0.7)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.font=`bold 28px 'Orbitron',sans-serif`;
+      ctx.fillStyle='#00ffff'; ctx.shadowBlur=20; ctx.shadowColor='#00ffff';
+      ctx.textAlign='center';
+      ctx.fillText('PAUSED', canvas.width/2, canvas.height/2);
+      ctx.font=`11px 'Share Tech Mono',monospace`;
+      ctx.fillStyle='rgba(0,255,255,0.5)';
+      ctx.shadowBlur=0;
+      ctx.fillText('PRESS P TO RESUME', canvas.width/2, canvas.height/2+30);
+      ctx.textAlign='left';
+    }
+  },
+
+  // Respawn player in the SAME level, same maze, same dots remaining
+  respawnInLevel() {
+    // Reset player to spawn
+    this.player = new HexMan(this.maze.spawn.x, this.maze.spawn.y);
+    this.player.speed = 2.5 + (this.level-1)*0.08;
+
+    // Reset ghosts back to house
+    this.ghosts = [];
+    const numGhosts = Math.min(4, 1 + Math.floor(this.level/2));
+    for (let i=0; i<numGhosts; i++) {
+      const sp = this.maze.ghostSpawns[i] || this.maze.ghostSpawns[0];
+      const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, i*120+60);
+      g.speed = 1.8 + (this.level-1)*0.06;
+      this.ghosts.push(g);
+    }
+    this.ghostEatCombo = 0;
+    this.particles = new ParticleSystem();
+    this.updateHUD();
+    this.startCountdown();
+  },
+
+  gameOver() {
+    this.state = 'gameover';
+    audio.gameOver();
+    audio.stopBg();
+    showOverlay('gameover');
+  },
+
+  showGameWin() {
+    this.state = 'gamewon';
+    audio.levelComplete();
+    audio.stopBg();
+    showOverlay('gamewon');
+  }
+};
