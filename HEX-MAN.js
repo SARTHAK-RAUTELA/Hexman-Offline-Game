@@ -1,3 +1,4 @@
+
 // ============================================================
 //  HEX-MAN — Complete Game Engine
 //  Canvas 2D | Web Audio API | Pure Vanilla JS
@@ -34,15 +35,15 @@ function computeTile(cols, rows) {
 
 // Level configs: cols, rows, ghost speed multiplier, dots bonus, fruit score
 const LEVEL_CONFIGS = [
-    { cols: 23, rows: 23, ghostSpd: 0.50, name: 'SECTOR 1', color: '#00ffff', dotBonus: 1.0 },
-    { cols: 21, rows: 23, ghostSpd: 0.58, name: 'SECTOR 2', color: '#00ff88', dotBonus: 1.1 },
-    { cols: 23, rows: 25, ghostSpd: 0.65, name: 'SECTOR 3', color: '#ffff00', dotBonus: 1.2 },
-    { cols: 23, rows: 25, ghostSpd: 0.72, name: 'SECTOR 4', color: '#ff8800', dotBonus: 1.3 },
-    { cols: 25, rows: 27, ghostSpd: 0.78, name: 'SECTOR 5', color: '#ff00ff', dotBonus: 1.4 },
-    { cols: 25, rows: 27, ghostSpd: 0.83, name: 'SECTOR 6', color: '#ff4444', dotBonus: 1.5 },
-    { cols: 29, rows: 29, ghostSpd: 0.88, name: 'SECTOR 7', color: '#aa44ff', dotBonus: 1.6 },
-    { cols: 29, rows: 29, ghostSpd: 0.92, name: 'SECTOR 8', color: '#ff6600', dotBonus: 1.8 },
-    { cols: 35, rows: 31, ghostSpd: 0.96, name: 'SECTOR 9', color: '#ff0088', dotBonus: 2.0 },
+    { cols: 23, rows: 23, ghostSpd: 0.70, name: 'SECTOR 1', color: '#00ffff', dotBonus: 1.0 },
+    { cols: 21, rows: 23, ghostSpd: 0.75, name: 'SECTOR 2', color: '#00ff88', dotBonus: 1.1 },
+    { cols: 23, rows: 25, ghostSpd: 0.79, name: 'SECTOR 3', color: '#ffff00', dotBonus: 1.2 },
+    { cols: 23, rows: 25, ghostSpd: 0.83, name: 'SECTOR 4', color: '#ff8800', dotBonus: 1.3 },
+    { cols: 25, rows: 27, ghostSpd: 0.86, name: 'SECTOR 5', color: '#ff00ff', dotBonus: 1.4 },
+    { cols: 25, rows: 27, ghostSpd: 0.89, name: 'SECTOR 6', color: '#ff4444', dotBonus: 1.5 },
+    { cols: 29, rows: 29, ghostSpd: 0.92, name: 'SECTOR 7', color: '#aa44ff', dotBonus: 1.6 },
+    { cols: 29, rows: 29, ghostSpd: 0.95, name: 'SECTOR 8', color: '#ff6600', dotBonus: 1.8 },
+    { cols: 35, rows: 31, ghostSpd: 0.97, name: 'SECTOR 9', color: '#ff0088', dotBonus: 2.0 },
     { cols: 35, rows: 31, ghostSpd: 1.00, name: 'SECTOR 10', color: '#ffffff', dotBonus: 2.5 },
 ];
 
@@ -182,7 +183,8 @@ const audio = new AudioEngine();
 
 const RAW_MAZES = [
     // ── LEVEL 1 ── 21×23 ── Simple open layout ──────────────
-    ['#####################',
+    [
+        '#####################',
         '#o#.............#..o#',
         '#.#########.#.###.#.#',
         '#...#.....#.#.....#.#',
@@ -204,9 +206,12 @@ const RAW_MAZES = [
         '#...#.#...#...#.....#',
         '#####.#.#.###.#####.#',
         '#o......#..........o#',
-        '#####################'],
-    // ── LEVEL 2 ───────────────────────────────────────────────
-    ['#####################',
+        '#####################',
+    ],
+
+    // ── LEVEL 2 ── 21×23 ── Tighter turns ──────────────
+    [
+        '#####################',
         '#o#.......#........o#',
         '#.#####.#.#.#.#####.#',
         '#.......#.#.#.....#.#',
@@ -222,19 +227,22 @@ const RAW_MAZES = [
         '#...............#...#',
         '#########.###.#####.#',
         '#...#...#.P...#.....#',
-        '#.###.#.###o###.#####',
+        '#.###.#.#######.#####',
         '#...#.#.......#.#...#',
         '#.#.#.###.#####.#.###',
         '#.#...#.#.#.....#...#',
         '#.#####.#.#.#######.#',
         '#o......#..........o#',
-        '#####################'],
-    // ── LEVEL 3 ───────────────────────────────────────────────
-    ['#######################',
+        '#####################',
+    ],
+
+    // ── LEVEL 3 ── 23×25 ── Dense maze ──────────────
+    [
+        '#######################',
         '#o......#............o#',
         '#######.#.#######.#####',
         '#.....#.#.......#.....#',
-        '#.#####.###o###.#####.#',
+        '#.#####.#######.#####.#',
         '#...#...#.....#.#...#.#',
         '#.#.#.###.###.#.###.#.#',
         '#.#...#.....#.......#.#',
@@ -246,7 +254,7 @@ const RAW_MAZES = [
         '#...#...GGGGGGG.#.#...#',
         '#.#####.........#.#####',
         '#.........#.#.........#',
-        '######o###.P.##.#####.#',
+        '##########.P.##.#####.#',
         '#.......#.#...#.#.....#',
         '###.###.#.###.###.###.#',
         '#...#.#...#.#...#...#.#',
@@ -254,10 +262,12 @@ const RAW_MAZES = [
         '#...#.........#...#...#',
         '#.#.#############.###.#',
         '#o#..................o#',
-        '#######################'],
+        '#######################',
+    ],
 
-    // ── LEVEL 4 ───────────────────────────────────────────────
-    ['#######################',
+    // ── LEVEL 4 ── 23×25 ── Winding corridors ──────────────
+    [
+        '#######################',
         '#o....#.....#........o#',
         '#####.#.###.#####.###.#',
         '#...#...#...#...#.#.#.#',
@@ -265,7 +275,7 @@ const RAW_MAZES = [
         '#.#...#...#...#...#...#',
         '#.#####.###.#######.###',
         '#.....#...#.......#...#',
-        '#.###.###.#.##o##.###.#',
+        '#.###.###.#.#####.###.#',
         '#.#...#.#.#.....#.#.#.#',
         'T.....................T',
         '#.#.#...GGG.GGG...#...#',
@@ -275,16 +285,18 @@ const RAW_MAZES = [
         '#.#...#.#.#.....#.#...#',
         '#.#####.##.P.####.#.###',
         '#.....#.......#...#.#.#',
-        '#####.###o###.#.#.#.#.#',
+        '#####.#######.#.#.#.#.#',
         '#...#...#...#.#.#...#.#',
         '#.#.###.###.#.#.#####.#',
         '#.#...#.....#.#...#...#',
         '#.#.#######.#.###.###.#',
         '#o#.........#........o#',
-        '#######################'],
+        '#######################',
+    ],
 
-    // ── LEVEL 5 ───────────────────────────────────────────────
-    ['#########################',
+    // ── LEVEL 5 ── 25×27 ── Larger map ──────────────
+    [
+        '#########################',
         '#o#...............#...#o#',
         '#.#######.###.###.#.#.#.#',
         '#.#.....#.#.#...#...#...#',
@@ -294,29 +306,31 @@ const RAW_MAZES = [
         '#...#.#...#.#.....#.....#',
         '#####.#.#.#.###########.#',
         '#...#.#.#.#.#.....#...#.#',
-        'T.........o.............T',
+        'T.......................T',
         '#.#.#.#...........#.#...#',
         '###.#.##.GGG.GGG..#.###.#',
         '#...#....GGGGGGG..#.#...#',
         '#.#.###..GGGGGGG..#.#.###',
         '#.#...#...........#.#.#.#',
-        '#.#####.#.#.###o#.#.#.#.#',
+        '#.#####.#.#.#####.#.#.#.#',
         '#.......#...P...#.#.#...#',
         '#.#######.###.#.#.#.#####',
-        '#.#o......#...#...#.....#',
+        '#.#.......#...#...#.....#',
         '#.#######.###.###.#####.#',
         '#.#.....#.....#...#...#.#',
         '#.#.###.#######.###.#.#.#',
         '#.#.#...#.....#...#.#.#.#',
         '#.#.#.###.###.#####.#.#.#',
         '#o..#.....#.........#..o#',
-        '#########################'],
+        '#########################',
+    ],
 
-    // ── LEVEL 6 ───────────────────────────────────────────────
-    ['#########################',
+    // ── LEVEL 6 ── 25×27 ── Denser walls ──────────────
+    [
+        '#########################',
         '#o..#.....#.........#..o#',
         '###.###.#.#.#######.#.#.#',
-        '#.#...#o#...#.#...#...#.#',
+        '#.#...#.#...#.#...#...#.#',
         '#.###.#####.#.#.#.#####.#',
         '#.....#...#...#.#.#.....#',
         '#.#####.#.#####.#.#.###.#',
@@ -325,13 +339,13 @@ const RAW_MAZES = [
         '#.#.#...#...#...#.....#.#',
         'T.......................T',
         '#.....#...........#.#...#',
-        '#######..GGGoGGG..#.#####',
+        '#######..GGG.GGG..#.#####',
         '#........GGGGGGG......#.#',
         '#.#.####.GGGGGGG.####.#.#',
         '#.#.................#...#',
         '#.#####.#.#####.###.###.#',
         '#.#...#...#.P.#.#...#...#',
-        '#.#.#.#####o#.#.###.#.###',
+        '#.#.#.#####.#.#.###.#.###',
         '#.#.#.....#.#.#...#.#...#',
         '#.#.###.###.#.###.#####.#',
         '#.#...#.....#...#.....#.#',
@@ -339,41 +353,45 @@ const RAW_MAZES = [
         '#...#.....#...#...#...#.#',
         '###.#.###.#.#.###.###.#.#',
         '#o....#.....#.......#..o#',
-        '#########################'],
+        '#########################',
+    ],
 
-    // ── LEVEL 7 ───────────────────────────────────────────────
-    ['###########################',
+    // ── LEVEL 7 ── 27×29 ── Labyrinthine ──────────────
+    [
+        '###########################',
         '#o..#.......#.........#..o#',
         '###.#.#####.#.#.#######.#.#',
         '#...#...#...#.#.........#.#',
         '#.#######.###.#########.#.#',
         '#.#.......#...#...#...#.#.#',
-        '#.#.#####.#.###o#.#.#.#.#.#',
+        '#.#.#####.#.###.#.#.#.#.#.#',
         '#.#.#.....#.#...#.#.#.#.#.#',
         '#.#.#######.#.#####.#.###.#',
         '#.#.........#.#...#.#.....#',
         'T.........................T',
         '#...#...#.......#.#.....#.#',
         '###.###............####.#.#',
-        '#.#...#..GGGGoGGGG..#...#.#',
+        '#.#...#..GGGG.GGGG..#...#.#',
         '#.###.#..GGGGGGGGG.##.###.#',
         '#.#...#..GGGGGGGGG..#.#.#.#',
-        '#.#.###.........o...#.#.#.#',
+        '#.#.###.............#.#.#.#',
         '#...#.....#...#...#...#...#',
         '#.##########.P.##.#####.###',
         '#.........#.....#.....#...#',
         '#########.#.###.#.###.###.#',
         '#.#.....#.#.#.#.#...#.#.#.#',
         '#.#.#.#.#.#.#.#.#.###.#.#.#',
-        '#.#.#o#.#...#...#.#...#...#',
+        '#.#.#.#.#...#...#.#...#...#',
         '#.#.#.#######.#####.###.###',
         '#.#.#.......#.......#.#.#.#',
         '#.#.#######.#########.#.#.#',
         '#o........#..............o#',
-        '###########################'],
+        '###########################',
+    ],
 
-    // ── LEVEL 8 ───────────────────────────────────────────────
-    ['###########################',
+    // ── LEVEL 8 ── 27×29 ── Tight corridors ──────────────
+    [
+        '###########################',
         '#o#.............#...#....o#',
         '#.###.#########.#.#.#.###.#',
         '#...#...#.....#.#.#...#...#',
@@ -383,16 +401,16 @@ const RAW_MAZES = [
         '#.#.....#.#.#.#.....#.#...#',
         '#.###.#.#.#.#.#.#####.#.###',
         '#.#...#...#.#.#.....#.#.#.#',
-        'T.............o...........T',
+        'T.........................T',
         '#...#.......#...#.....#.#.#',
         '#####.#............####.#.#',
-        '#.....#..GGGGoGGGG....#...#',
+        '#.....#..GGGG.GGGG....#...#',
         '###.###..GGGGGGGGG..#####.#',
         '#...#....GGGGGGGGG......#.#',
         '#.######...........##.#.#.#',
         '#.........#.#...#.....#.#.#',
         '#.##########.P..#.#######.#',
-        '#.#....o........#.#.....#.#',
+        '#.#.............#.#.....#.#',
         '#.#####.#.#######.#.###.#.#',
         '#.#...#.#.#...#...#...#...#',
         '#.#.#.#.###.#.#.#.###.#####',
@@ -401,10 +419,12 @@ const RAW_MAZES = [
         '#.#...#.#...#.#...#.......#',
         '#.#.#####.#.#.###.#########',
         '#o........#...#..........o#',
-        '###########################'],
+        '###########################',
+    ],
 
-    // ── LEVEL 9 ───────────────────────────────────────────────
-    ['#############################',
+    // ── LEVEL 9 ── 29×31 ── Expert layout ──────────────
+    [
+        '#############################',
         '#o#.........#.......#......o#',
         '#.###.#####.###.###.#.#####.#',
         '#...#.#...#...#.#...#.....#.#',
@@ -434,10 +454,12 @@ const RAW_MAZES = [
         '#.....#.........#.....#.....#',
         '#.#############.#######.###.#',
         '#o......................#..o#',
-        '#############################'],
+        '#############################',
+    ],
 
-    // ── LEVEL 10 ─────────────────────────────────────────────
-    ['#############################',
+    // ── LEVEL 10 ── 29×31 ── Max difficulty ──────────────
+    [
+        '#############################',
         '#o#.................#.#....o#',
         '#.#.#########.#####.#.#.#.###',
         '#.#.#.........#.....#...#...#',
@@ -467,8 +489,10 @@ const RAW_MAZES = [
         '#.#...#.....#.#...#.#.....#.#',
         '#.###.#######.#####.#######.#',
         '#o............#............o#',
-        '#############################']];
+        '#############################',
+    ],
 
+];
 
 // Parse a raw maze string array into the tile grid + metadata
 function buildMaze(cols, rows, level) {
@@ -663,7 +687,11 @@ class HexMan {
         // Power mode timer
         if (this.powerMode) {
             this.powerTimer -= dt;
-            if (this.powerTimer <= 0) { this.powerMode = false; }
+            if (this.powerTimer <= 0) {
+                this.powerMode = false;
+                // Reset ghost eat combo so next power pellet starts fresh
+                if (Game && Game.ghostEatCombo !== undefined) Game.ghostEatCombo = 0;
+            }
         }
 
         // Center of current tile (target for alignment)
@@ -680,9 +708,15 @@ class HexMan {
             this.pixelX = targetX;
             this.pixelY = targetY;
 
-            // Tunnel wrap
-            if (this.tileX < 0) { this.tileX = maze.cols - 1; this.pixelX = this.tileX * TILE + TILE / 2; }
-            if (this.tileX >= maze.cols) { this.tileX = 0; this.pixelX = TILE / 2; }
+            // Tunnel wrap - snap pixel position instantly for true teleportation effect
+            if (this.tileX < 0) {
+                this.tileX = maze.cols - 1;
+                this.pixelX = this.tileX * TILE + TILE / 2;
+            }
+            if (this.tileX >= maze.cols) {
+                this.tileX = 0;
+                this.pixelX = TILE / 2;
+            }
 
             // Try next direction first
             const nxt = this.nextDir;
@@ -697,9 +731,15 @@ class HexMan {
             if (this.canMove(ctx2, cty, maze)) {
                 this.tileX += this.dir.x;
                 this.tileY += this.dir.y;
-                // Wrap tunnels
-                if (this.tileX < 0) this.tileX = maze.cols - 1;
-                if (this.tileX >= maze.cols) this.tileX = 0;
+                // Wrap tunnels and snap pixel position immediately for instant teleportation
+                if (this.tileX < 0) {
+                    this.tileX = maze.cols - 1;
+                    this.pixelX = this.tileX * TILE + TILE / 2;
+                }
+                if (this.tileX >= maze.cols) {
+                    this.tileX = 0;
+                    this.pixelX = TILE / 2;
+                }
                 this.moving = true;
             } else {
                 this.moving = false;
@@ -839,21 +879,34 @@ class Ghost {
         // Can't reverse unless frightened/eaten
         const reverse = { x: -this.dir.x, y: -this.dir.y };
         let best = null, bestDist = Infinity;
+        const validDirs = [];
 
-        for (const d of DIRS) {
+        // Shuffle DIRS for unbiased random selection
+        const shuffled = DIRS.slice().sort(() => Math.random() - 0.5);
+
+        for (const d of shuffled) {
             if (d.x === reverse.x && d.y === reverse.y && this.state !== 'frightened') continue;
             const nx = this.tileX + d.x, ny = this.tileY + d.y;
-            if (nx < 0 || nx >= maze.cols || ny < 0 || ny >= maze.rows) continue;
-            const t = maze.grid[ny][nx];
+
+            // Allow tunnel wrapping (out-of-bounds on X axis for tunnel rows)
+            const wrappedX = nx < 0 ? maze.cols - 1 : (nx >= maze.cols ? 0 : nx);
+            const wrappedY = ny;
+
+            if (wrappedY < 0 || wrappedY >= maze.rows) continue;
+            const t = maze.grid[wrappedY][wrappedX];
             if (t === T.WALL) continue;
             if (t === T.GHOST_HOUSE && this.state !== 'house' && this.state !== 'eaten') continue;
 
-            const dist = Math.abs(nx - target.x) + Math.abs(ny - target.y);
             if (this.state === 'frightened') {
-                // Random movement
-                if (Math.random() < 0.4) { best = d; break; }
+                validDirs.push(d);
+            } else {
+                const dist = Math.abs(wrappedX - target.x) + Math.abs(wrappedY - target.y);
+                if (dist < bestDist) { bestDist = dist; best = d; }
             }
-            if (dist < bestDist) { bestDist = dist; best = d; }
+        }
+
+        if (this.state === 'frightened') {
+            return validDirs.length > 0 ? validDirs[Math.floor(Math.random() * validDirs.length)] : this.dir;
         }
         return best || this.dir;
     }
@@ -863,9 +916,9 @@ class Ghost {
 
         const spd = this.speed * levelCfg.ghostSpd;
 
-        // Handle exit from ghost house
+        // Handle exit from ghost house (exitDelay is in seconds)
         if (this.state === 'house') {
-            this.exitTimer -= 1;
+            this.exitTimer -= dt;
             if (this.exitTimer <= 0) {
                 this.state = 'scatter';
                 this.scatterTimer = 7;
@@ -896,8 +949,8 @@ class Ghost {
         if (this.state === 'scatter') {
             const sc = this.def.scatter;
             target = {
-                x: sc.x < 0 ? 1 : (sc.x > 0 ? maze.cols - 2 : Math.floor(maze.cols / 2)),
-                y: sc.y < 0 ? 1 : (sc.y > 0 ? maze.rows - 2 : Math.floor(maze.rows / 2))
+                x: sc.x < 0 ? 2 : (sc.x > 0 ? maze.cols - 3 : Math.floor(maze.cols / 2)),
+                y: sc.y < 0 ? 2 : (sc.y > 0 ? maze.rows - 3 : Math.floor(maze.rows / 2))
             };
         } else if (this.state === 'eaten') {
             target = { x: Math.floor(maze.cols / 2), y: Math.floor(maze.rows / 2) };
@@ -916,7 +969,7 @@ class Ghost {
             this.pixelX = targetPX;
             this.pixelY = targetPY;
 
-            // Tunnel wrap
+            // Tunnel wrap - snap pixel instantly
             if (this.tileX <= 0 && this.dir.x < 0) { this.tileX = maze.cols - 1; this.pixelX = this.tileX * TILE + TILE / 2; }
             if (this.tileX >= maze.cols - 1 && this.dir.x > 0) { this.tileX = 0; this.pixelX = TILE / 2; }
 
@@ -925,9 +978,11 @@ class Ghost {
             this.tileX += this.dir.x;
             this.tileY += this.dir.y;
 
-            // Clamp
-            this.tileX = Math.max(0, Math.min(maze.cols - 1, this.tileX));
+            // Wrap Y axis (clamp only, no tunnels vertically)
             this.tileY = Math.max(0, Math.min(maze.rows - 1, this.tileY));
+            // Wrap X axis for tunnels
+            if (this.tileX < 0) { this.tileX = maze.cols - 1; this.pixelX = this.tileX * TILE + TILE / 2; }
+            if (this.tileX >= maze.cols) { this.tileX = 0; this.pixelX = TILE / 2; }
 
             // Check if eaten ghost returned home
             if (this.state === 'eaten') {
@@ -935,7 +990,19 @@ class Ghost {
                 const centerY = Math.floor(maze.rows / 2);
                 if (Math.abs(this.tileX - centerX) < 2 && Math.abs(this.tileY - centerY) < 2) {
                     this.state = 'scatter'; this.scatterTimer = 5;
-                    this.tileX = centerX; this.tileY = centerY;
+                    // Snap to a valid ghost house tile to prevent getting stuck in walls
+                    let spawnX = centerX, spawnY = centerY;
+                    for (let dy = -2; dy <= 2; dy++) {
+                        for (let dx = -2; dx <= 2; dx++) {
+                            const tx = centerX + dx, ty = centerY + dy;
+                            if (tx >= 0 && tx < maze.cols && ty >= 0 && ty < maze.rows && maze.grid[ty][tx] === T.GHOST_HOUSE) {
+                                spawnX = tx; spawnY = ty; break;
+                            }
+                        }
+                        if (maze.grid[spawnY] && maze.grid[spawnY][spawnX] === T.GHOST_HOUSE) break;
+                    }
+                    this.tileX = spawnX; this.tileY = spawnY;
+                    this.pixelX = spawnX * TILE + TILE / 2; this.pixelY = spawnY * TILE + TILE / 2;
                 }
             }
         } else {
@@ -1083,11 +1150,31 @@ function drawMaze(ctx, maze, frame, levelColor) {
                 }
 
             } else if (t === T.TUNNEL) {
-                // Draw tunnel as open corridor with arrow hint
+                // Draw tunnel as open corridor with directional arrow hints
                 ctx.fillStyle = '#000811';
                 ctx.fillRect(px, py, TILE, TILE);
-                ctx.fillStyle = levelColor + '33';
+                // Horizontal corridor highlight
+                ctx.fillStyle = levelColor + '22';
                 ctx.fillRect(px, py + TILE * 0.3, TILE, TILE * 0.4);
+                // Arrow pointing outward
+                ctx.fillStyle = levelColor + '88';
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = levelColor;
+                const arrowDir = x === 0 ? -1 : 1;
+                const cx2 = px + TILE / 2, cy2 = py + TILE / 2;
+                ctx.beginPath();
+                if (arrowDir < 0) {
+                    ctx.moveTo(cx2 - TILE * 0.3, cy2);
+                    ctx.lineTo(cx2 + TILE * 0.1, cy2 - TILE * 0.2);
+                    ctx.lineTo(cx2 + TILE * 0.1, cy2 + TILE * 0.2);
+                } else {
+                    ctx.moveTo(cx2 + TILE * 0.3, cy2);
+                    ctx.lineTo(cx2 - TILE * 0.1, cy2 - TILE * 0.2);
+                    ctx.lineTo(cx2 - TILE * 0.1, cy2 + TILE * 0.2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
 
             } else {
                 // Empty passage
@@ -1168,7 +1255,7 @@ const Game = {
         const numGhosts = Math.min(4, 1 + Math.floor(this.level / 2));
         for (let i = 0; i < numGhosts; i++) {
             const sp = maze.ghostSpawns[i] || maze.ghostSpawns[0];
-            const delay = i * 120 + 60;
+            const delay = i * 2.0 + 1.0;  // seconds: 1s, 3s, 5s, 7s
             const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, delay);
             g.speed = 1.8 + (this.level - 1) * 0.06;
             this.ghosts.push(g);
@@ -1203,7 +1290,7 @@ const Game = {
         const numGhosts = Math.min(4, 1 + Math.floor(this.level / 2));
         for (let i = 0; i < numGhosts; i++) {
             const sp = maze.ghostSpawns[i] || maze.ghostSpawns[0];
-            const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, i * 120 + 60);
+            const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, i * 2.0 + 1.0);
             g.speed = 1.8 + (this.level - 1) * 0.06;
             this.ghosts.push(g);
         }
@@ -1261,8 +1348,13 @@ const Game = {
         for (const g of this.ghosts) g.frighten(dur);
         this.player.powerMode = true;
         this.player.powerTimer = dur;
+        this.player.powerDuration = dur; // store max for bar
         this.ghostEatCombo = 0;
         audio.powerMode(true);
+        // Show power bar
+        const pwBar = document.getElementById('power-bar-wrap');
+        const pwFill = document.getElementById('power-bar');
+        if (pwBar) { pwBar.style.display = 'block'; pwFill.style.width = '100%'; pwFill.style.background = '#ff00ff'; }
         if (this.dotCount <= 0) this.levelComplete();
     },
 
@@ -1278,7 +1370,6 @@ const Game = {
     },
 
     playerDied() {
-        this.state = 'dying';
         this.stateTimer = 2.5;
         this.player.alive = false;
         audio.death();
@@ -1350,6 +1441,21 @@ const Game = {
             // Update player
             this.player.update(dt, this.maze);
 
+            // Update power mode bar
+            if (this.player.powerMode) {
+                const pct = Math.max(0, this.player.powerTimer / (this.player.powerDuration || 8)) * 100;
+                const pwFill = document.getElementById('power-bar');
+                if (pwFill) {
+                    pwFill.style.width = pct + '%';
+                    // Flash red when under 2 seconds
+                    pwFill.style.background = this.player.powerTimer < 2 ?
+                        (Math.floor(Date.now() / 200) % 2 === 0 ? '#ff0000' : '#ff88ff') : '#ff00ff';
+                }
+            } else {
+                const pwBar = document.getElementById('power-bar-wrap');
+                if (pwBar) pwBar.style.display = 'none';
+            }
+
             // Check dot/power eating
             const px = this.player.tileX, py = this.player.tileY;
             if (px >= 0 && px < this.maze.cols && py >= 0 && py < this.maze.rows) {
@@ -1375,16 +1481,15 @@ const Game = {
                 if (dist < TILE * 0.75) {
                     if (g.state === 'frightened') {
                         this.eatGhost(g);
-                    } else if (g.state !== 'eaten' && this.player.alive) {
-                        // Player dies
+                    } else if (g.state !== 'eaten' && this.player.alive && this.state === 'playing') {
+                        // Player dies — guard with state check to prevent multi-trigger
+                        this.state = 'dying';
                         this.lives--;
                         this.updateHUD();
                         this.playerDied();
                         if (this.lives <= 0) {
-                            // No lives left — restart whole game from level 1
                             setTimeout(() => this.gameOver(), 2600);
                         } else {
-                            // Still have lives — respawn in same level, same maze
                             setTimeout(() => this.respawnInLevel(), 2600);
                         }
                     }
@@ -1510,7 +1615,7 @@ const Game = {
         const numGhosts = Math.min(4, 1 + Math.floor(this.level / 2));
         for (let i = 0; i < numGhosts; i++) {
             const sp = this.maze.ghostSpawns[i] || this.maze.ghostSpawns[0];
-            const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, i * 120 + 60);
+            const g = new Ghost(GHOST_DEFS[i], sp.x, sp.y, i * 2.0 + 1.0);
             g.speed = 1.8 + (this.level - 1) * 0.06;
             this.ghosts.push(g);
         }
@@ -1690,6 +1795,28 @@ document.addEventListener('keydown', e => {
 });
 
 document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// ─── MOBILE D-PAD ────────────────────────────────────────────
+function setupDpad() {
+    const map = {
+        'dpad-up': DIR.UP,
+        'dpad-down': DIR.DOWN,
+        'dpad-left': DIR.LEFT,
+        'dpad-right': DIR.RIGHT
+    };
+    for (const [id, dir] of Object.entries(map)) {
+        const btn = document.getElementById(id);
+        if (!btn) continue;
+        const press = (e) => {
+            e.preventDefault();
+            audio.init();
+            if (Game.state === 'playing') Game.player.setDir(dir);
+        };
+        btn.addEventListener('touchstart', press, { passive: false });
+        btn.addEventListener('mousedown', press);
+    }
+}
+setupDpad();
 
 // ─── GAME LOOP ───────────────────────────────────────────────
 let lastTime = 0;

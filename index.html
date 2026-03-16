@@ -33,6 +33,11 @@
             </div>
         </div>
 
+        <!-- Power mode bar -->
+        <div id="power-bar-wrap">
+            <div id="power-bar" style="width:100%"></div>
+        </div>
+
         <!-- Canvas -->
         <canvas id="gameCanvas"></canvas>
 
@@ -43,7 +48,6 @@
             <span>P = PAUSE</span>
         </div>
 
-
         <!-- Scanlines overlay -->
         <div class="scanlines"></div>
 
@@ -52,6 +56,12 @@
             <div id="overlay-content"
                 style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:460px;padding:28px 32px;background:rgba(0,4,12,0.7);border:1px solid rgba(0,255,255,0.12);box-shadow:0 0 40px rgba(0,255,255,0.05),inset 0 0 40px rgba(0,0,0,0.5);">
             </div>
+        </div> <!-- Mobile D-pad -->
+        <div id="dpad">
+            <div class="dpad-btn" id="dpad-up">▲</div>
+            <div class="dpad-btn" id="dpad-left">◀</div>
+            <div class="dpad-btn" id="dpad-right">▶</div>
+            <div class="dpad-btn" id="dpad-down">▼</div>
         </div>
 
     </div>
