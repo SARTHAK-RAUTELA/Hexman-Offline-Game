@@ -22,15 +22,15 @@ This game is built entirely with **HTML5 Canvas, CSS, and Vanilla JavaScript** a
 ## Game State Flow
 
 Menu
-↓
+  ↓
 Frozen
-↓
+  ↓
 Countdown
-↓
+  ↓
 Playing
-├── Dying → Game Over
-├── Level Complete → Next Level → Frozen
-└── Paused → Resume → Playing
+  ├── Dying → Game Over
+  ├── Level Complete → Next Level → Frozen
+  └── Paused → Resume → Playing
 
 
 
@@ -76,22 +76,18 @@ Mobile:
 
 ## Project Structure
 
-HEXMAN-OFFLINE-GAME/
+HEXMAN-OFFLINE-GAME
 │
 ├── index.html
 ├── HEX-MAN.css
 ├── HEX-MAN.js
 │
 ├── assets
-│ └── sounds
+│   └── sounds
 │
 ├── images
 │
 └── README.md
-
-![HTML](https://img.shields.io/badge/HTML-5-orange)
-![CSS](https://img.shields.io/badge/CSS-3-blue)
-![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow)
 
 ![HTML5](https://img.shields.io/badge/HTML-5-orange)
 ![CSS3](https://img.shields.io/badge/CSS-3-blue)
