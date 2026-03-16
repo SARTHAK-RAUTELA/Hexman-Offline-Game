@@ -1645,7 +1645,7 @@ function showOverlay(type) {
       </div>
       <div class="score-list">HIGH SCORE: <span>${Game.highScore.toString().padStart(6, '0')}</span></div>
       <div style="display:flex;justify-content:center;width:100%;margin:4px 0 10px;">
-        <button class="overlay-btn" id="btn-start" style="width:220px;text-align:center;">START GAME</button>
+        <button class="overlay-btn" id="btn-start" style="width:224px;text-align:center;">START GAME</button>
       </div>
       <div style="font-size:9px;color:rgba(0,255,255,0.25);letter-spacing:2px;text-align:center;margin-bottom:6px;">
         EAT ALL DOTS · COLLECT POWER PELLETS · CHAIN GHOST KILLS<br>

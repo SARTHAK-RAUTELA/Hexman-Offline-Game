@@ -148,7 +148,7 @@ body {
 }
 
 .overlay-title {
-    font-size: clamp(28px, 5vw, 52px);
+    font-size: clamp(28px, 5vw, 46px);
     font-weight: 900;
     letter-spacing: 6px;
     margin-bottom: 8px;
