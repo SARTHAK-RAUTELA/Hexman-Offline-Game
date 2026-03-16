@@ -20,7 +20,7 @@ Classic Pac-Man inspired arcade game built using HTML5 Canvas and Vanilla JavaSc
 ## Live Demo
 
 <a href="https://sarthak-rautela.github.io/Hexman-Offline-Game/" target="_blank">
-  <img src="https://img.shields.io/badge/Play-Hexman%20Game-brightgreen">
+<img src="https://img.shields.io/badge/🎮%20Play-Hexman%20Game-success?style=for-the-badge">
 </a>
 
 ## Gameplay Preview
