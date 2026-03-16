@@ -6,6 +6,29 @@ Power pellets allow Hexman to temporarily defeat ghosts.
 
 This game is built entirely with **HTML5 Canvas, CSS, and Vanilla JavaScript** and works offline in the browser.
 
+
+## Live Demo
+
+
+
+# Hexman Offline Game
+
+![HTML5](https://img.shields.io/badge/HTML-5-orange)
+![CSS3](https://img.shields.io/badge/CSS-3-blue)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow)
+![Game](https://img.shields.io/badge/Game-Arcade-green)
+
+Classic Pac-Man inspired arcade game built using HTML5 Canvas and Vanilla JavaScript.
+
+## Live Demo
+
+[![Play Game](https://img.shields.io/badge/Play-HEXMAN-GAME-brightgreen)]([https://sarthak-rautela.github.io/Hexman-Offline-Game/])
+
+## Gameplay Preview
+
+![Hexman Gameplay](images/hexman-gameplay.gif)
+
+
 ## Features
 
 - Classic Pac-Man style gameplay
