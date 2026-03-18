@@ -39,7 +39,13 @@ playing →
    levelcomplete → next level → frozen
    paused → resume → playing
 
+'''
+menu → frozen → countdown → playing → dying / levelcomplete / paused
+                                  ↓              ↓
+                              gameover      next level (back to frozen)
+                              
 
+'''
 
 ## Controls
 
@@ -92,6 +98,18 @@ HEXMAN-OFFLINE-GAME
 - images/
 - README.md
 
+'''
+HEXMAN-OFFLINE-GAME/
+│
+├── index.html
+├── HEX-MAN.css
+├── HEX-MAN.js
+├── assets/
+│   ├── sounds
+│   └── images
+└── README.md
+
+'''
 
 # Hexman Offline Game
 
